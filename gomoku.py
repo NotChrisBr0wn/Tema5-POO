@@ -48,7 +48,7 @@ class Gomoku(Jogo):
         Verifica se ainda há espaços vazios no tabuleiro.
         :return: True se ainda há jogadas possíveis, False caso contrário.
         """
-        raise NotImplementedError("Implementar este método")
+        return any(celula == ' ' for linha in self.tabuleiro for celula in linha)
 
     def terminou(self) -> bool:
         """
