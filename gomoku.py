@@ -36,7 +36,29 @@ class Gomoku(Jogo):
         - Deve validar se a posição está dentro do tabuleiro e está livre.
         :param jogador: número do jogador (0 ou 1).
         """
-        raise NotImplementedError("Implementar este método")
+        peca = 'O' if jogador == 0 else 'X'
+        
+        while True:
+            try:
+                coords = input(f"Jogador {jogador} ({peca}), introduza uma linha e coluna (0-9): ")
+                linha, coluna = map(int, coords.split())
+                
+                # Verifica se a posição está dentro do tabuleiro
+                if linha < 0 or linha > 9 or coluna < 0 or coluna > 9:
+                    print("Posição fora do tabuleiro! Tente novamente.")
+                    continue
+                
+                # Verificar se está vazio
+                if self.tabuleiro[linha][coluna] != ' ':
+                    print("❌ Posição ocupada! Tente novamente.")
+                    continue
+                
+                # Colocar a peça
+                self.tabuleiro[linha][coluna] = peca
+                break
+            except (ValueError, IndexError):
+                print("⚠️ Entrada inválida! Use o formato: linha coluna")
+                continue
 
     def joga_computador(self, jogador: int) -> None:
         """
