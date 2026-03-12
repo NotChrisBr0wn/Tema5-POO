@@ -13,7 +13,6 @@ class Gomoku(Jogo):
     """
     Classe concreta que herda da classe Jogo e implementa o jogo Gomoku.
     """
-
     def __init__(self) -> None:
         super().__init__()
         self.jogador_humano = None
@@ -22,6 +21,8 @@ class Gomoku(Jogo):
         self.score_hotseat: dict[int, int] | None = None
         self.jogador_atual_hotseat: int | None = None
         self._acabou_de_carregar_hotseat: bool = False
+        self.historico: list[list[list[str]]] = []
+        self.redo: list[list[list[str]]] = []
 
     def inicializa_tabuleiro(self) -> None:
         """
@@ -42,6 +43,37 @@ class Gomoku(Jogo):
             print(f"{i} | {conteudo_linha} |")
         print()
 
+    def _snapshot_tabuleiro(self) -> list[list[str]]:
+        # Cria uma cópia do tabuleiro atual
+        return [linha[:] for linha in self.tabuleiro]
+
+    def guardar_jogada(self) -> None:
+        # Guarda o estado atual para poder desfazer e limpa o histórico de refazer
+        self.historico.append(self._snapshot_tabuleiro())
+        self.redo.clear()
+
+    def desfazer(self) -> bool:
+        # Desfaz a última jogada
+        if not self.historico:
+            print("Nada para desfazer.")
+            return False
+
+        self.redo.append(self._snapshot_tabuleiro())
+        self.tabuleiro = self.historico.pop()
+        print("Última jogada desfeita.")
+        return True
+
+    def refazer(self) -> bool:
+        # Refaz a última jogada desfeita
+        if not self.redo:
+            print("Nada para refazer.")
+            return False
+
+        self.historico.append(self._snapshot_tabuleiro())
+        self.tabuleiro = self.redo.pop()
+        print("Jogada refeita.")
+        return True
+
     def joga_humano(self, jogador: int) -> None:
         """
         Pede ao jogador humano as coordenadas (linha, coluna) da jogada
@@ -54,7 +86,10 @@ class Gomoku(Jogo):
         
         while True:
             try:
-                coords = input(f"Jogador {jogador} ({peca}), introduza linha coluna (0-9), 's' para guardar ou 'c' para carregar: ")
+                coords = input(
+                    f"Jogador {jogador} ({peca}), introduza linha coluna (0-9), "
+                    "'s' guardar, 'c' carregar, 'u' desfazer, 'r' refazer: "
+                )
 
                 if coords.strip().lower() == 's':
                     self.guardar_estado()
@@ -64,6 +99,14 @@ class Gomoku(Jogo):
                     self.mostra_tabuleiro()
                     if self.modo_hotseat:
                         return
+                    continue
+                if coords.strip().lower() == 'u':
+                    self.desfazer()
+                    self.mostra_tabuleiro()
+                    continue
+                if coords.strip().lower() == 'r':
+                    self.refazer()
+                    self.mostra_tabuleiro()
                     continue
 
                 linha, coluna = map(int, coords.split())
@@ -79,6 +122,7 @@ class Gomoku(Jogo):
                     continue
                 
                 # Colocar a peça
+                self.guardar_jogada()
                 self.tabuleiro[linha][coluna] = peca
                 break
             except (ValueError, IndexError):
@@ -156,30 +200,35 @@ class Gomoku(Jogo):
         # Tentar vencer imediatamente
         jogada = self.jogada_prioritaria(peca, 5)
         if jogada:
+            self.guardar_jogada()
             self.tabuleiro[jogada[0]][jogada[1]] = peca
             return
 
         # Bloquear vitória do adversário
         jogada = self.jogada_prioritaria(adversario, 5)
         if jogada:
+            self.guardar_jogada()
             self.tabuleiro[jogada[0]][jogada[1]] = peca
             return
 
         # Bloquear 4 em linha do adversário
         jogada = self.jogada_prioritaria(adversario, 4)
         if jogada:
+            self.guardar_jogada()
             self.tabuleiro[jogada[0]][jogada[1]] = peca
             return
 
         # Tentar criar 4 em linha
         jogada = self.jogada_prioritaria(peca, 4)
         if jogada:
+            self.guardar_jogada()
             self.tabuleiro[jogada[0]][jogada[1]] = peca
             return
 
         # Tentar criar 3 em linha
         jogada = self.jogada_prioritaria(peca, 3)
         if jogada:
+            self.guardar_jogada()
             self.tabuleiro[jogada[0]][jogada[1]] = peca
             return
 
@@ -188,6 +237,7 @@ class Gomoku(Jogo):
             linha = randint(0, 9)
             coluna = randint(0, 9)
             if self.tabuleiro[linha][coluna] == ' ':
+                self.guardar_jogada()
                 self.tabuleiro[linha][coluna] = peca
                 break
 
@@ -231,6 +281,8 @@ class Gomoku(Jogo):
             'nomes_hotseat': self.nomes_hotseat,
             'score_hotseat': self.score_hotseat,
             'jogador_atual_hotseat': self.jogador_atual_hotseat,
+            'historico': self.historico,
+            'redo': self.redo,
         }
         with open(ficheiro, 'wb') as f:
             pickle.dump(estado, f)
@@ -255,6 +307,9 @@ class Gomoku(Jogo):
             self.score_hotseat = estado.get('score_hotseat')
             self.jogador_atual_hotseat = estado.get('jogador_atual_hotseat')
             self._acabou_de_carregar_hotseat = True
+
+        self.historico = estado.get('historico', [])
+        self.redo = estado.get('redo', [])
 
         print(f"Jogo carregado de '{ficheiro}'.")
 
