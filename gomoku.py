@@ -64,14 +64,61 @@ class Gomoku(Jogo):
                 print("⚠️ Entrada inválida! Use o formato: linha coluna")
                 continue
 
+    def cinco_em_linha(self, peca: str) -> bool:
+        # Igual a terminou() mas para uma peça específica
+        direcoes = [(0, 1), (1, 0), (1, 1), (1, -1)]
+        for linha in range(10):
+            for coluna in range(10):
+                if self.tabuleiro[linha][coluna] == peca:
+                    for dx, dy in direcoes:
+                        contador = 1
+                        x, y = linha + dx, coluna + dy
+                        while 0 <= x < 10 and 0 <= y < 10 and self.tabuleiro[x][y] == peca:
+                            contador += 1
+                            x += dx
+                            y += dy
+                        if contador >= 5:
+                            return True
+        return False
+
+    def _jogada_vencedora(self, peca: str):
+        # Procura por uma posicao que ganhe o jogo
+        for linha in range(10):
+            for coluna in range(10):
+                if self.tabuleiro[linha][coluna] == ' ':
+                    self.tabuleiro[linha][coluna] = peca
+                    ganhou = self.cinco_em_linha(peca)
+                    self.tabuleiro[linha][coluna] = ' '
+                    if ganhou:
+                        return (linha, coluna)
+        return None
+
     def joga_computador(self, jogador: int) -> None:
         """
-        Realiza uma jogada aleatória do computador numa posição livre.
+        Realiza uma jogada aleatória do computador numa posição livre.(Agora inteligente)
+        !Realiza uma jogada inteligente do computador:
+        - Tenta vencer imediatamente.
+        - Bloqueia vitória imediata do adversário.
+        -  Caso contrário, joga aleatoriamente.
+
         - Jogador 0 usa 'O', Jogador 1 usa 'X'.
-        :param jogador: número do jogador (computador).
+        :para jogador: número do jogador (computador).
         """
         peca = 'O' if jogador == 0 else 'X'
-        
+        adversario = 'X' if peca == 'O' else 'O'
+
+        # Tenta vencer imediatamente
+        jogada = self._jogada_vencedora(peca)
+        if jogada:
+            self.tabuleiro[jogada[0]][jogada[1]] = peca
+            return
+
+        # Bloqueia o adversário
+        jogada = self._jogada_vencedora(adversario)
+        if jogada:
+            self.tabuleiro[jogada[0]][jogada[1]] = peca
+            return
+
         # Encontra uma posição vazia aleatoriamente
         while True:
             linha = randint(0, 9)
