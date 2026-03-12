@@ -64,8 +64,8 @@ class Gomoku(Jogo):
                 print("⚠️ Entrada inválida! Use o formato: linha coluna")
                 continue
 
-    def cinco_em_linha(self, peca: str) -> bool:
-        # Igual a terminou() mas para uma peça específica
+    def _n_em_linha(self, peca: str, n: int) -> bool:
+        """Verifica se a peça dada tem n ou mais peças seguidas em qualquer direção."""
         direcoes = [(0, 1), (1, 0), (1, 1), (1, -1)]
         for linha in range(10):
             for coluna in range(10):
@@ -77,19 +77,22 @@ class Gomoku(Jogo):
                             contador += 1
                             x += dx
                             y += dy
-                        if contador >= 5:
+                        if contador >= n:
                             return True
         return False
 
-    def _jogada_vencedora(self, peca: str):
-        # Procura por uma posicao que ganhe o jogo
+    def jogada_vencedora(self, peca: str, n: int):
+        """
+        Procura posição vazia onde colocar peca cria n ou mais em linha.
+        :return: (linha, coluna) se existe, None caso contrário.
+        """
         for linha in range(10):
             for coluna in range(10):
                 if self.tabuleiro[linha][coluna] == ' ':
                     self.tabuleiro[linha][coluna] = peca
-                    ganhou = self.cinco_em_linha(peca)
+                    vencedora = self._n_em_linha(peca, n)
                     self.tabuleiro[linha][coluna] = ' '
-                    if ganhou:
+                    if vencedora:
                         return (linha, coluna)
         return None
 
@@ -107,14 +110,26 @@ class Gomoku(Jogo):
         peca = 'O' if jogador == 0 else 'X'
         adversario = 'X' if peca == 'O' else 'O'
 
-        # Tenta vencer imediatamente
-        jogada = self._jogada_vencedora(peca)
+        # Tentar vencer imediatamente
+        jogada = self.jogada_vencedora(peca, 5)
         if jogada:
             self.tabuleiro[jogada[0]][jogada[1]] = peca
             return
 
-        # Bloqueia o adversário
-        jogada = self._jogada_vencedora(adversario)
+        # Bloquear vitória do adversário
+        jogada = self.jogada_vencedora(adversario, 5)
+        if jogada:
+            self.tabuleiro[jogada[0]][jogada[1]] = peca
+            return
+
+        # Bloquear 4 em linha do adversário
+        jogada = self.jogada_vencedora(adversario, 4)
+        if jogada:
+            self.tabuleiro[jogada[0]][jogada[1]] = peca
+            return
+
+        # Bloqueia 3 em linha do adversário
+        jogada = self.jogada_vencedora(adversario, 3) 
         if jogada:
             self.tabuleiro[jogada[0]][jogada[1]] = peca
             return
