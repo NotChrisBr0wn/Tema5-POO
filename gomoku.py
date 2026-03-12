@@ -23,7 +23,9 @@ class Gomoku(Jogo):
         Desenha o tabuleiro na consola.
         Dica: Pode usar enumerate() para numerar as linhas.
         """
-        raise NotImplementedError("Implementar este método")
+        print("  " + " ".join(str(c) for c in range(10)))
+        for i, linha in enumerate(self.tabuleiro):
+            print(f"{i} " + "|".join(linha))
 
     def joga_humano(self, jogador: int) -> None:
         """
