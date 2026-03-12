@@ -64,7 +64,7 @@ class Gomoku(Jogo):
                 print("⚠️ Entrada inválida! Use o formato: linha coluna")
                 continue
 
-    def _n_em_linha(self, peca: str, n: int) -> bool:
+    def n_linha(self, peca: str, n: int) -> bool:
         """Verifica se a peça dada tem n ou mais peças seguidas em qualquer direção."""
         direcoes = [(0, 1), (1, 0), (1, 1), (1, -1)]
         for linha in range(10):
@@ -81,16 +81,38 @@ class Gomoku(Jogo):
                             return True
         return False
 
-    def jogada_vencedora(self, peca: str, n: int):
-        """
-        Procura posição vazia onde colocar peca cria n ou mais em linha.
-        :return: (linha, coluna) se existe, None caso contrário.
-        """
+    def maximo_linha (self, linha: int, coluna: int, peca: str) -> int:
+        # Conta o numero maximo de pecas iguais em linha
+        direcoes = [(0, 1), (1, 0), (1, 1), (1, -1)]
+        melhor = 1
+
+        for dx, dy in direcoes:
+            contador = 1
+
+            x, y = linha + dx, coluna + dy
+            while 0 <= x < 10 and 0 <= y < 10 and self.tabuleiro[x][y] == peca:
+                contador += 1
+                x += dx
+                y += dy
+                
+            x, y = linha - dx, coluna - dy
+            while 0 <= x < 10 and 0 <= y < 10 and self.tabuleiro[x][y] == peca:
+                contador += 1
+                x -= dx
+                y -= dy
+
+            if contador > melhor:
+                melhor = contador
+
+        return melhor
+
+    def jogada_prioritaria(self, peca: str, n: int):
+        # Procura uma jogada que crie 3/4/5 em linha, senao bloqueia o adversário
         for linha in range(10):
             for coluna in range(10):
                 if self.tabuleiro[linha][coluna] == ' ':
                     self.tabuleiro[linha][coluna] = peca
-                    vencedora = self._n_em_linha(peca, n)
+                    vencedora = self.maximo_linha (linha, coluna, peca) >= n
                     self.tabuleiro[linha][coluna] = ' '
                     if vencedora:
                         return (linha, coluna)
@@ -111,25 +133,31 @@ class Gomoku(Jogo):
         adversario = 'X' if peca == 'O' else 'O'
 
         # Tentar vencer imediatamente
-        jogada = self.jogada_vencedora(peca, 5)
+        jogada = self.jogada_prioritaria(peca, 5)
         if jogada:
             self.tabuleiro[jogada[0]][jogada[1]] = peca
             return
 
         # Bloquear vitória do adversário
-        jogada = self.jogada_vencedora(adversario, 5)
+        jogada = self.jogada_prioritaria(adversario, 5)
         if jogada:
             self.tabuleiro[jogada[0]][jogada[1]] = peca
             return
 
         # Bloquear 4 em linha do adversário
-        jogada = self.jogada_vencedora(adversario, 4)
+        jogada = self.jogada_prioritaria(adversario, 4)
         if jogada:
             self.tabuleiro[jogada[0]][jogada[1]] = peca
             return
 
-        # Bloqueia 3 em linha do adversário
-        jogada = self.jogada_vencedora(adversario, 3) 
+        # Tentar criar 4 em linha
+        jogada = self.jogada_prioritaria(peca, 4)
+        if jogada:
+            self.tabuleiro[jogada[0]][jogada[1]] = peca
+            return
+
+        # Tentar criar 3 em linha
+        jogada = self.jogada_prioritaria(peca, 3)
         if jogada:
             self.tabuleiro[jogada[0]][jogada[1]] = peca
             return
