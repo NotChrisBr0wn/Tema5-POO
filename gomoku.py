@@ -4,6 +4,7 @@ Template para implementar o jogo Gomoku (Cinco em Linha).
 Deve implementar todos os métodos abstratos herdados de Jogo.
 """
 
+import pickle
 from jogo_abs import Jogo
 from random import randint
 
@@ -44,7 +45,16 @@ class Gomoku(Jogo):
         
         while True:
             try:
-                coords = input(f"Jogador {jogador} ({peca}), introduza uma linha e coluna (0-9): ")
+                coords = input(f"Jogador {jogador} ({peca}), introduza linha coluna (0-9), 's' para guardar ou 'c' para carregar: ")
+
+                if coords.strip().lower() == 's':
+                    self.guardar_estado()
+                    continue
+                if coords.strip().lower() == 'c':
+                    self.carregar_estado()
+                    self.mostra_tabuleiro()
+                    continue
+
                 linha, coluna = map(int, coords.split())
                 
                 # Verifica se a posição está dentro do tabuleiro
@@ -200,3 +210,21 @@ class Gomoku(Jogo):
                         if contador >= 5:
                             return True
         return False
+
+    def guardar_estado(self, ficheiro: str = 'jogo.pkl') -> None:
+        # Guarda o estado do jogo num ficheiro pickle (jogo.pkl default)
+        estado = {
+            'tabuleiro': self.tabuleiro,
+            'jogador_humano': self.jogador_humano
+        }
+        with open(ficheiro, 'wb') as f:
+            pickle.dump(estado, f)
+        print(f"Jogo guardado em '{ficheiro}'.")
+
+    def carregar_estado(self, ficheiro: str = 'jogo.pkl') -> None:
+        # Carrega o estado do jogo a partir de um ficheiro pickle
+        with open(ficheiro, 'rb') as f:
+            estado = pickle.load(f)
+        self.tabuleiro = estado['tabuleiro']
+        self.jogador_humano = estado['jogador_humano']
+        print(f"Jogo carregado de '{ficheiro}'.")
