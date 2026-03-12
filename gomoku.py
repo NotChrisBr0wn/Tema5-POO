@@ -14,6 +14,15 @@ class Gomoku(Jogo):
     Classe concreta que herda da classe Jogo e implementa o jogo Gomoku.
     """
 
+    def __init__(self) -> None:
+        super().__init__()
+        self.jogador_humano = None
+        self.modo_hotseat: bool = False
+        self.nomes_hotseat: dict[int, str] | None = None
+        self.score_hotseat: dict[int, int] | None = None
+        self.jogador_atual_hotseat: int | None = None
+        self._acabou_de_carregar_hotseat: bool = False
+
     def inicializa_tabuleiro(self) -> None:
         """
         Inicializa o tabuleiro 10x10 com espaços vazios ' '.
@@ -53,6 +62,8 @@ class Gomoku(Jogo):
                 if coords.strip().lower() == 'c':
                     self.carregar_estado()
                     self.mostra_tabuleiro()
+                    if self.modo_hotseat:
+                        return
                     continue
 
                 linha, coluna = map(int, coords.split())
@@ -215,7 +226,11 @@ class Gomoku(Jogo):
         # Guarda o estado do jogo num ficheiro pickle (jogo.pkl default)
         estado = {
             'tabuleiro': self.tabuleiro,
-            'jogador_humano': self.jogador_humano
+            'jogador_humano': self.jogador_humano,
+            'modo_hotseat': self.modo_hotseat,
+            'nomes_hotseat': self.nomes_hotseat,
+            'score_hotseat': self.score_hotseat,
+            'jogador_atual_hotseat': self.jogador_atual_hotseat,
         }
         with open(ficheiro, 'wb') as f:
             pickle.dump(estado, f)
@@ -223,8 +238,77 @@ class Gomoku(Jogo):
 
     def carregar_estado(self, ficheiro: str = 'jogo.pkl') -> None:
         # Carrega o estado do jogo a partir de um ficheiro pickle
-        with open(ficheiro, 'rb') as f:
-            estado = pickle.load(f)
+        try:
+            with open(ficheiro, 'rb') as f:
+                estado = pickle.load(f)
+        except FileNotFoundError:
+            print(f"Ficheiro '{ficheiro}' não encontrado.")
+            return
+
         self.tabuleiro = estado['tabuleiro']
-        self.jogador_humano = estado['jogador_humano']
+        self.jogador_humano = estado.get('jogador_humano')
+
+        # Carrega estado do modo 2 jogadores
+        if estado.get('modo_hotseat'):
+            self.modo_hotseat = True
+            self.nomes_hotseat = estado.get('nomes_hotseat')
+            self.score_hotseat = estado.get('score_hotseat')
+            self.jogador_atual_hotseat = estado.get('jogador_atual_hotseat')
+            self._acabou_de_carregar_hotseat = True
+
         print(f"Jogo carregado de '{ficheiro}'.")
+
+    def hotseat(self) -> None:
+        # Modo dois jogadores com pontuação acumulada
+        nome0 = input("Nome do Jogador 0 (O): ").strip() or "Jogador 0"
+        nome1 = input("Nome do Jogador 1 (X): ").strip() or "Jogador 1"
+        nomes = {0: nome0, 1: nome1}
+        score = {0: 0, 1: 0}
+
+        self.modo_hotseat = True
+        self.nomes_hotseat = nomes
+        self.score_hotseat = score
+
+        while True:
+            self.inicializa_tabuleiro()
+            jogador = 0
+
+            while True:
+                self.mostra_tabuleiro()
+                print(f"Vez de {nomes[jogador]}")
+
+                # Guarda a vez atual
+                self.jogador_atual_hotseat = jogador
+                self.joga_humano(jogador)
+
+                # Se carregar estado repoe o jogador atual e pontuação
+                if self._acabou_de_carregar_hotseat:
+                    if self.nomes_hotseat is not None:
+                        nomes = self.nomes_hotseat
+                    if self.score_hotseat is not None:
+                        score = self.score_hotseat
+                    if self.jogador_atual_hotseat is not None:
+                        jogador = self.jogador_atual_hotseat
+                    self._acabou_de_carregar_hotseat = False
+                    continue
+
+                if self.terminou():
+                    self.mostra_tabuleiro()
+                    score[jogador] += 1
+                    print(f"\n{nomes[jogador]} ganhou!")
+                    print(f"Pontuação: {nomes[0]} = {score[0]} | {nomes[1]} = {score[1]}")
+                    break
+
+                if not self.ha_jogadas_possiveis():
+                    self.mostra_tabuleiro()
+                    print("\nEmpate!")
+                    print(f"Pontuação: {nomes[0]} = {score[0]} | {nomes[1]} = {score[1]}")
+                    break
+
+                jogador = (jogador + 1) % 2
+
+            again = input("\nJogar novamente? (s/n): ").strip().lower()
+            if again != 's':
+                print(f"\nPontuação final: {nomes[0]} = {score[0]} | {nomes[1]} = {score[1]}")
+                print("Obrigado por jogar!")
+                break
