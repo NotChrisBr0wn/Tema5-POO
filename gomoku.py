@@ -5,6 +5,7 @@ Deve implementar todos os métodos abstratos herdados de Jogo.
 """
 
 from jogo_abs import Jogo
+from random import randint
 
 
 class Gomoku(Jogo):
@@ -43,7 +44,15 @@ class Gomoku(Jogo):
         - Jogador 0 usa 'O', Jogador 1 usa 'X'.
         :param jogador: número do jogador (computador).
         """
-        raise NotImplementedError("Implementar este método")
+        peca = 'O' if jogador == 0 else 'X'
+        
+        # Encontra uma posição vazia aleatoriamente
+        while True:
+            linha = randint(0, 9)
+            coluna = randint(0, 9)
+            if self.tabuleiro[linha][coluna] == ' ':
+                self.tabuleiro[linha][coluna] = peca
+                break
 
     def ha_jogadas_possiveis(self) -> bool:
         """
