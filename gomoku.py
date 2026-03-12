@@ -58,4 +58,20 @@ class Gomoku(Jogo):
         horizontal, vertical, diagonal ↘️, diagonal ↗️).
         :return: True se o jogo terminou (alguém ganhou), False caso contrário.
         """
-        raise NotImplementedError("Implementar este método")
+        direcoes = [(0, 1), (1, 0), (1, 1), (1, -1)]
+        
+        for linha in range(10):
+            for coluna in range(10):
+                celula = self.tabuleiro[linha][coluna]
+                if celula != ' ':  # verifica apenas se a célula não estiver vazia
+                    for dx, dy in direcoes:
+                        # Conta 5 peças na mesma direção
+                        contador = 1
+                        x, y = linha + dx, coluna + dy
+                        while 0 <= x < 10 and 0 <= y < 10 and self.tabuleiro[x][y] == celula:
+                            contador += 1
+                            x += dx
+                            y += dy
+                        if contador >= 5:
+                            return True
+        return False
