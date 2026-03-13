@@ -395,8 +395,7 @@ def _mostra_menu() -> None:
     print(titulo + "  ╚══════════════════════╝  " + reset)
     print()
     print("  1. Novo jogo (vs Computador)")
-    print("  2. Carregar jogo guardado")
-    print("  3. 2 Jogadores")
+    print("  2. 2 Jogadores")
     print("  0. Sair")
     print()
 
@@ -412,17 +411,12 @@ def menu() -> None:
             jogo.jogar()
         elif opcao == '2':
             jogo = Gomoku()
-            jogo.carregar_estado()
-            jogo.mostra_tabuleiro()
-            jogo.jogar()
-        elif opcao == '3':
-            jogo = Gomoku()
             jogo.hotseat()
         elif opcao == '0':
             print("Até logo!")
             break
         else:
-            print("Opção inválida. Escolha 0, 1, 2 ou 3.")
+            print("Opção inválida. Escolha 0, 1 ou 2.")
             continue
 
         _mostra_menu()
