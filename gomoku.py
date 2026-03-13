@@ -7,6 +7,10 @@ Deve implementar todos os métodos abstratos herdados de Jogo.
 import pickle
 from jogo_abs import Jogo
 from random import randint
+import colorama
+from colorama import Fore, Back, Style
+
+colorama.init(autoreset=False)
 
 
 class Gomoku(Jogo):
@@ -35,12 +39,23 @@ class Gomoku(Jogo):
         Desenha o tabuleiro na consola.
         Dica: Pode usar enumerate() para numerar as linhas.
         """
+        reset = Style.RESET_ALL
+        fundo = Back.BLACK
+
         print()
-        cabecalho = "  | " + " | ".join(str(c) for c in range(10)) + " |"
+        cabecalho = fundo + "  | " + " | ".join(str(c) for c in range(10)) + " |" + reset
         print(cabecalho)
+
         for i, linha in enumerate(self.tabuleiro):
-            conteudo_linha = " | ".join(linha)
-            print(f"{i} | {conteudo_linha} |")
+            linha_str = f"{fundo}{i} |"
+            for celula in linha:
+                if celula == 'X':
+                    linha_str += f" {Back.BLACK}{Fore.RED}{Style.BRIGHT}X{reset}{fundo} |"
+                elif celula == 'O':
+                    linha_str += f" {Back.BLACK}{Fore.BLUE}{Style.BRIGHT}O{reset}{fundo} |"
+                else:
+                    linha_str += "   |"
+            print(linha_str + reset)
         print()
 
     def _snapshot_tabuleiro(self) -> list[list[str]]:
@@ -88,7 +103,7 @@ class Gomoku(Jogo):
             try:
                 coords = input(
                     f"Jogador {jogador} ({peca}), introduza linha coluna (0-9), "
-                    "'s' guardar, 'c' carregar, 'u' desfazer, 'r' refazer: "
+                    "'s' guardar, 'c' carregar, 'u' desfazer, 'r' refazer, 'q' sair: "
                 )
 
                 if coords.strip().lower() == 's':
@@ -108,6 +123,9 @@ class Gomoku(Jogo):
                     self.refazer()
                     self.mostra_tabuleiro()
                     continue
+                if coords.strip().lower() == 'q':
+                    print("A sair do jogo...")
+                    exit()
 
                 linha, coluna = map(int, coords.split())
                 
@@ -367,3 +385,48 @@ class Gomoku(Jogo):
                 print(f"\nPontuação final: {nomes[0]} = {score[0]} | {nomes[1]} = {score[1]}")
                 print("Obrigado por jogar!")
                 break
+
+def _mostra_menu() -> None:
+    titulo = Back.YELLOW + Fore.BLACK + Style.BRIGHT
+    reset = Style.RESET_ALL
+    print()
+    print(titulo + "  ╔══════════════════════╗  " + reset)
+    print(titulo + "  ║        GOMOKU        ║  " + reset)  
+    print(titulo + "  ╚══════════════════════╝  " + reset)
+    print()
+    print("  1. Novo jogo (vs Computador)")
+    print("  2. Carregar jogo guardado")
+    print("  3. 2 Jogadores")
+    print("  0. Sair")
+    print()
+
+
+def menu() -> None:
+    _mostra_menu()
+
+    while True:
+        opcao = input("Escolha uma opção: ").strip()
+
+        if opcao == '1':
+            jogo = Gomoku()
+            jogo.jogar()
+        elif opcao == '2':
+            jogo = Gomoku()
+            jogo.carregar_estado()
+            jogo.mostra_tabuleiro()
+            jogo.jogar()
+        elif opcao == '3':
+            jogo = Gomoku()
+            jogo.hotseat()
+        elif opcao == '0':
+            print("Até logo!")
+            break
+        else:
+            print("Opção inválida. Escolha 0, 1, 2 ou 3.")
+            continue
+
+        _mostra_menu()
+
+
+if __name__ == "__main__":
+    menu()
